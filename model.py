@@ -1,0 +1,66 @@
+from embedding import get_embedding_function
+from langchain_chroma import Chroma
+from langchain.prompts import ChatPromptTemplate
+from langchain_ollama import OllamaLLM
+from google import genai
+import argparse
+from dotenv import load_dotenv
+import os
+
+PROMPT_TEMPLATE = """
+Answer the question based only on the following context:
+
+{context}
+
+---
+
+Extract and summarize the Answer from the above context 
+You should not use any information out of the knowledge of the context.
+If the question is unrelated to the context politely decline
+Give a detailed explaination
+Question: {question}
+"""
+
+def main():
+    # Create CLI.
+    parser = argparse.ArgumentParser()
+    parser.add_argument("query_text", type=str, help="The query text.")
+    args = parser.parse_args()
+    query_text = args.query_text
+    print(query_rag(query_text))
+
+
+def query_rag(query_text: str):
+    # Prepare the DB.
+    embedding_function = get_embedding_function()
+    db = Chroma(persist_directory="Database", embedding_function=embedding_function)
+
+    # Search the DB.
+    print("Searching...")
+    results = db.similarity_search_with_score(query_text, k=20)
+    print("Search Finished")
+
+    context_text = "\n\n---\n\n".join([doc.page_content for doc, _score in results])
+    prompt_template = ChatPromptTemplate.from_template(PROMPT_TEMPLATE)
+    prompt = prompt_template.format(context=context_text, question=query_text)
+    #print(context_text)
+    
+    load_dotenv()
+    client = genai.Client(api_key=os.getenv('google_api'))
+
+    
+    print("Model Generation")
+    response = client.models.generate_content(
+        model="gemini-2.0-flash",
+        contents=[prompt]
+    )
+    # model = OllamaLLM(model="stablelm-zephyr:3b")
+    # response_text = model.invoke(prompt)
+
+    sources = [doc.metadata.get("id", None) for doc, _score in results]
+    formatted_response = f"Response: {response.text}\nSources: {sources}"
+    print("response complete")
+    return response.text
+
+if __name__ == "__main__":
+    main()
