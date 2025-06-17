@@ -1,6 +1,8 @@
 import os
+import io
 from dotenv import load_dotenv
 import sounddevice as sd
+import pyaudio
 import numpy as np
 import scipy.io.wavfile as wav
 import time
@@ -8,11 +10,11 @@ from google import genai
 from model import query_rag
 from google.genai import types
 import wave
-from playsound import playsound
+import soundfile as sf
 
 threshold = 0.50  # Adjust for your mic sensitivity
 samplerate = 44100
-chunk_duration = 1  # seconds
+chunk_duration =2   # seconds
 silence_limit = 2.0  # seconds before stopping
 
 recording = []
@@ -60,12 +62,12 @@ res = query_rag(response.text)
 
 
 # Set up the wave file to save the output:
-def wave_file(filename, pcm, channels=1, rate=24000, sample_width=2):
-   with wave.open(filename, "wb") as wf:
-      wf.setnchannels(channels)
-      wf.setsampwidth(sample_width)
-      wf.setframerate(rate)
-      wf.writeframes(pcm)
+# def wave_file(filename, pcm, channels=1, rate=24000, sample_width=2):
+#    with wave.open(filename, "wb") as wf:
+#       wf.setnchannels(channels)
+#       wf.setsampwidth(sample_width)
+#       wf.setframerate(rate)
+#       wf.writeframes(pcm)
 
 client = genai.Client(api_key=os.getenv('google_api'))
 
@@ -85,8 +87,15 @@ response = client.models.generate_content(
 )  
 
 data = response.candidates[0].content.parts[0].inline_data.data
+print("Audio generation complete")
+# file_name='output.wav'
+# wave_file(file_name, data)
 
-file_name='output.wav'
-wave_file(file_name, data)
+audio_stream = io.BytesIO(data)
 
-playsound("output.wav")
+# Decode from binary stream - specify format for BytesIO
+audio_data, sample_rate = sf.read(audio_stream, dtype='float32', format='RAW', subtype='PCM_16', samplerate=24000, channels=1)
+
+# Play it directly
+sd.play(audio_data, sample_rate)
+sd.wait()
