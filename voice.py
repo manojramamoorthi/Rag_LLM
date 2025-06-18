@@ -5,11 +5,9 @@ import sounddevice as sd
 import pyaudio
 import numpy as np
 import scipy.io.wavfile as wav
-import time
 from google import genai
 from model import query_rag
 from google.genai import types
-import wave
 import soundfile as sf
 
 threshold = 0.50  # Adjust for your mic sensitivity
@@ -84,7 +82,7 @@ response = client.models.generate_content(
          )
       ),
    )
-)  
+)
 
 data = response.candidates[0].content.parts[0].inline_data.data
 print("Audio generation complete")
