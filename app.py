@@ -2,21 +2,67 @@ from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import base64
 import os
-import io
 import tempfile
 from dotenv import load_dotenv
 from google import genai
 from google.genai import types
-from model import query_rag
 import logging
 from pathlib import Path
+from langchain_ollama import OllamaEmbeddings
+from langchain_chroma import Chroma
+from langchain.prompts import ChatPromptTemplate
+
+PROMPT_TEMPLATE = """
+Answer the question based only on the following context:
+
+{context}
+
+---
+
+Extract and summarize the Answer from the above context 
+You should not use any information out of the knowledge of the context.
+If the question is unrelated to the context politely decline
+Give a detailed explaination
+Question: {question}
+"""
+
+def get_embedding_function():
+    embeddings = OllamaEmbeddings(model="mxbai-embed-large:335m")
+    return embeddings
+
+def query_rag(query_text: str):
+    # Prepare the DB.
+    embedding_function = get_embedding_function()
+    db = Chroma(persist_directory="Database", embedding_function=embedding_function)
+
+    # Search the DB.
+    print("Searching...")
+    results = db.similarity_search_with_score(query_text, k=10)
+    print("Search Finished")
+
+    context_text = "\n\n---\n\n".join([doc.page_content for doc, _score in results])
+    prompt_template = ChatPromptTemplate.from_template(PROMPT_TEMPLATE)
+    prompt = prompt_template.format(context=context_text, question=query_text)
+    #print(context_text)
+    
+    load_dotenv()
+    genai.configure(api_key=os.getenv('google_api'))
+
+    
+    #print("Model Generation")
+    model = genai.GenerativeModel("gemini-1.5-flash")
+    response = model.generate_content(prompt)
+
+    #sources = [doc.metadata.get("id", None) for doc, _score in results]
+    #formatted_response = f"Response: {response.text}\nSources: {sources}"
+    print("response complete")
+    return response.text
+
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Load environment variables
-load_dotenv()
 
 app = FastAPI(
     title="Voice RAG API",

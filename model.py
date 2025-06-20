@@ -1,4 +1,4 @@
-from embedding import get_embedding_function
+from langchain_ollama import OllamaEmbeddings
 from langchain_chroma import Chroma
 from langchain.prompts import ChatPromptTemplate
 import google.generativeai as genai
@@ -28,6 +28,9 @@ def main():
     query_text = args.query_text
     print(query_rag(query_text))
 
+def get_embedding_function():
+    embeddings = OllamaEmbeddings(model="mxbai-embed-large:335m")
+    return embeddings
 
 def query_rag(query_text: str):
     # Prepare the DB.
