@@ -1,7 +1,7 @@
 from langchain_ollama import OllamaEmbeddings
 from langchain_chroma import Chroma
 from langchain.prompts import ChatPromptTemplate
-import google.generativeai as genai
+from google import genai
 import argparse
 from dotenv import load_dotenv
 import os
@@ -48,12 +48,14 @@ def query_rag(query_text: str):
     #print(context_text)
     
     load_dotenv()
-    genai.configure(api_key=os.getenv('google_api'))
+    client = genai.Client(api_key=os.getenv('google_api'))
 
     
     #print("Model Generation")
-    model = genai.GenerativeModel("gemini-1.5-flash")
-    response = model.generate_content(prompt)
+    response = client.models.generate_content(
+        model="gemini-1.5-flash",
+        contents=prompt
+    )
 
     #sources = [doc.metadata.get("id", None) for doc, _score in results]
     #formatted_response = f"Response: {response.text}\nSources: {sources}"

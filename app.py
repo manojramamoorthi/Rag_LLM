@@ -26,6 +26,8 @@ Give a detailed explaination
 Question: {question}
 """
 
+load_dotenv()
+
 def get_embedding_function():
     embeddings = OllamaEmbeddings(model="mxbai-embed-large:335m")
     return embeddings
@@ -45,13 +47,16 @@ def query_rag(query_text: str):
     prompt = prompt_template.format(context=context_text, question=query_text)
     #print(context_text)
     
-    load_dotenv()
-    genai.configure(api_key=os.getenv('google_api'))
+    # Use the global genai_client that's already initialized
+    if not genai_client:
+        raise HTTPException(status_code=500, detail="GenAI client not available")
 
     
     #print("Model Generation")
-    model = genai.GenerativeModel("gemini-1.5-flash")
-    response = model.generate_content(prompt)
+    response = genai_client.models.generate_content(
+        model="gemini-1.5-flash",
+        contents=prompt
+    )
 
     #sources = [doc.metadata.get("id", None) for doc, _score in results]
     #formatted_response = f"Response: {response.text}\nSources: {sources}"
