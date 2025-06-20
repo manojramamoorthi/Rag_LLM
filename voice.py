@@ -2,7 +2,6 @@ import os
 import io
 from dotenv import load_dotenv
 import sounddevice as sd
-import pyaudio
 import numpy as np
 import scipy.io.wavfile as wav
 from google import genai
@@ -19,7 +18,7 @@ recording = []
 silent_chunks = 0
 max_silent_chunks = int(silence_limit / chunk_duration)
 
-print("Listening... Speak now!")
+print("🎤 Listening... Speak now!")
 
 while True:
     audio_chunk = sd.rec(int(chunk_duration * samplerate), samplerate=samplerate, channels=1)
@@ -34,7 +33,7 @@ while True:
         silent_chunks += 1
         recording.append(audio_chunk)
         if silent_chunks > max_silent_chunks:
-            print("Silence detected. Stopping...")
+            print("🛑 Silence detected. Stopping...")
             break
 
 if recording:

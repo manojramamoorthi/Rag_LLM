@@ -1,8 +1,7 @@
 from embedding import get_embedding_function
 from langchain_chroma import Chroma
 from langchain.prompts import ChatPromptTemplate
-from langchain_ollama import OllamaLLM
-from google import genai
+import google.generativeai as genai
 import argparse
 from dotenv import load_dotenv
 import os
@@ -37,7 +36,7 @@ def query_rag(query_text: str):
 
     # Search the DB.
     print("Searching...")
-    results = db.similarity_search_with_score(query_text, k=20)
+    results = db.similarity_search_with_score(query_text, k=10)
     print("Search Finished")
 
     context_text = "\n\n---\n\n".join([doc.page_content for doc, _score in results])
@@ -46,19 +45,15 @@ def query_rag(query_text: str):
     #print(context_text)
     
     load_dotenv()
-    client = genai.Client(api_key=os.getenv('google_api'))
+    genai.configure(api_key=os.getenv('google_api'))
 
     
-    print("Model Generation")
-    response = client.models.generate_content(
-        model="gemini-2.0-flash",
-        contents=[prompt]
-    )
-    # model = OllamaLLM(model="stablelm-zephyr:3b")
-    # response_text = model.invoke(prompt)
+    #print("Model Generation")
+    model = genai.GenerativeModel("gemini-1.5-flash")
+    response = model.generate_content(prompt)
 
-    sources = [doc.metadata.get("id", None) for doc, _score in results]
-    formatted_response = f"Response: {response.text}\nSources: {sources}"
+    #sources = [doc.metadata.get("id", None) for doc, _score in results]
+    #formatted_response = f"Response: {response.text}\nSources: {sources}"
     print("response complete")
     return response.text
 
