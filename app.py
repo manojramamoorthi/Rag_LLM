@@ -5,7 +5,6 @@ import os
 import tempfile
 from dotenv import load_dotenv
 from google import genai
-from google.genai import types
 import logging
 from pathlib import Path
 from langchain_ollama import OllamaEmbeddings
@@ -139,28 +138,6 @@ class VoiceProcessor:
             except Exception as cleanup_error:
                 logger.warning(f"Failed to clean up temp file: {cleanup_error}")
             raise HTTPException(status_code=500, detail=f"Error processing audio: {str(e)}")
-    
-    async def generate_audio_response(self, text: str) -> bytes:
-        """Generate audio response from text using Google GenAI TTS."""
-        try:
-            response = genai_client.models.generate_content(
-                model="gemini-2.5-flash-preview-tts",
-                contents="Say cheerfully: " + text,
-                config=types.GenerateContentConfig(
-                    response_modalities=["AUDIO"],
-                    speech_config=types.SpeechConfig(
-                        voice_config=types.VoiceConfig(
-                            prebuilt_voice_config=types.PrebuiltVoiceConfig(
-                                voice_name='Kore',
-                            )
-                        )
-                    ),
-                )
-            )
-            
-            audio_data = response.candidates[0].content.parts[0].inline_data.data
-            #logger.info("Audio generation completed")
-            return audio_data
             
         except Exception as e:
             logger.error(f"Error generating audio response: {e}")
@@ -233,16 +210,12 @@ async def process_voice(audio_file: UploadFile = File(...)):
         
         # Step 3: Generate audio response
         #logger.info("Generating audio response...")
-        audio_data = await voice_processor.generate_audio_response(rag_response)
         
         # Step 4: Return audio response
         #logger.info("Returning audio response")
-        audio_base64 = base64.b64encode(audio_data).decode("utf-8")
 
         return {
-            "audio_base64": audio_base64,
-            "format": "wav",
-            "length": len(audio_data)
+            "response": rag_response
         }
         
     except HTTPException:
@@ -251,43 +224,6 @@ async def process_voice(audio_file: UploadFile = File(...)):
         logger.error(f"Unexpected error in process_voice: {e}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
-@app.post("/process-voice-json")
-async def process_voice_json(audio_file: UploadFile = File(...)):
-    """
-    Process voice file and return JSON response with transcription, RAG response, and audio URL.
-    Alternative endpoint for clients that need structured data.
-    """
-    
-    if not genai_client:
-        raise HTTPException(status_code=500, detail="Google GenAI client not available")
-    
-    if not audio_file.content_type.startswith('audio/'):
-        raise HTTPException(status_code=400, detail="File must be an audio file")
-    
-    try:
-        logger.info(f"Processing audio file (JSON mode): {audio_file.filename}")
-        
-        # Convert audio to text
-        transcribed_text = await voice_processor.process_audio_file(audio_file)
-        
-        # Query RAG database
-        rag_response = query_rag(transcribed_text)
-        
-        # Generate audio response
-        audio_data = await voice_processor.generate_audio_response(rag_response)
-        
-        # For JSON response, you might want to save the audio file temporarily
-        # and provide a download URL, or return base64 encoded audio
-        import base64
-        audio_base64 = base64.b64encode(audio_data).decode('utf-8')
-        
-        return {
-            "transcription": transcribed_text,
-            "rag_response": rag_response,
-            "audio_response": audio_base64,
-            "audio_format": "wav",
-            "status": "success"
-        }
         
     except HTTPException:
         raise
@@ -302,7 +238,7 @@ if __name__ == "__main__":
     try:
         uvicorn.run(
             "app:app",
-            host="localhost",
+            host="0.0.0.0",
             port=8000,
             reload=True,
             log_level="info"
