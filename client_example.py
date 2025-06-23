@@ -73,7 +73,7 @@ class VoiceRAGClient:
 # Example usage
 def main():
     # Initialize client 143.244.130.47
-    client = VoiceRAGClient("http://143.244.130.47:8000")  # Change to your server URL
+    client = VoiceRAGClient("http://localhost:8000")  # Change to your server URL
     
     print(" Checking API health...")
     health = client.health_check()
