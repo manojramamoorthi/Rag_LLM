@@ -1,6 +1,6 @@
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-import base64
+from pydantic import BaseModel
 import os
 import tempfile
 from dotenv import load_dotenv
@@ -61,6 +61,9 @@ def query_rag(query_text: str):
     #formatted_response = f"Response: {response.text}\nSources: {sources}"
     print("response complete")
     return response.text
+
+class TextRequest(BaseModel):
+    question: str
 
 
 # Configure logging
@@ -231,7 +234,36 @@ async def process_voice(audio_file: UploadFile = File(...)):
         logger.error(f"Unexpected error in process_voice_json: {e}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
-
+@app.post("/process-text")
+async def process_text(request: TextRequest):
+    
+    
+    if not genai_client:
+        raise HTTPException(status_code=500, detail="Google GenAI client not available")
+    
+    # Validate text input
+    if not request.question or not request.question.strip():
+        raise HTTPException(status_code=400, detail="Question input cannot be empty")
+    
+    try:
+        #logger.info(f"Processing question: {request.question[:100]}...")
+        
+        # Query RAG database
+        #logger.info("Querying RAG database...")
+        rag_response = query_rag(request.question)
+        #logger.info(f"RAG response: {rag_response[:100]}...")
+        
+        # Return response
+        #logger.info("Returning RAG response")
+        return {
+            "response": rag_response
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected error in process_text: {e}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 if __name__ == "__main__":
     import uvicorn
