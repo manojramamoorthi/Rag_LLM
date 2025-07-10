@@ -3,7 +3,6 @@ import json
 from playsound import playsound
 import os
 from pathlib import Path
-import sounddevice as sd
 import numpy as np
 import scipy.io.wavfile as wav
 import asyncio
@@ -30,55 +29,7 @@ async def run_tts(context):
 def calculate_volume(chunk):
     return np.sqrt(np.mean(chunk**2))
 
-def record():
 
-    print("\n🎧 Processing audio file...")
-
-    # Separate thresholds
-    start_threshold = 0.05       # Start recording above this
-    silence_threshold = 0.03     # Stop recording if below this for long enough
-
-    samplerate = 44100
-    chunk_duration = 2  # seconds
-    silence_limit = 2.0  # seconds of silence to stop
-
-    recording = []
-    silent_chunks = 0
-    max_silent_chunks = int(silence_limit / chunk_duration)
-
-    print("🎤 Listening... Speak now!")
-
-    recording_started = False
-
-    while True:
-        audio_chunk = sd.rec(int(chunk_duration * samplerate), samplerate=samplerate, channels=1, dtype='float32')
-        sd.wait()
-        volume = calculate_volume(audio_chunk)
-        print(f"🔊 Volume: {volume:.5f}")
-
-        if not recording_started:
-            if volume > start_threshold:
-                print("🎙️ Recording started...")
-                recording_started = True
-                recording.append(audio_chunk)
-        else:
-            recording.append(audio_chunk)
-            if volume < silence_threshold:
-                silent_chunks += 1
-                print(f"🕑 Silence chunk {silent_chunks}/{max_silent_chunks}")
-            else:
-                silent_chunks = 0
-
-            if silent_chunks >= max_silent_chunks:
-                print("🛑 Silence detected. Stopping...")
-                break
-
-    if recording:
-        audio_np = np.concatenate(recording, axis=0)
-        wav.write("voice_recording.wav", samplerate, audio_np)
-        print("Saved as voice_recording.wav")
-    else:
-        print("No audio detected.")
     
     
 
@@ -164,8 +115,6 @@ if "error" in health:
     print(" API is not accessible!")
     
 else:
-    if False:
-        record()
     audio_file = 'voice_recording.wav'
     if Path(audio_file).exists():
         s = time.perf_counter()
