@@ -4,7 +4,6 @@ from playsound import playsound
 import os
 from pathlib import Path
 import numpy as np
-import scipy.io.wavfile as wav
 import asyncio
 from tts import text_to_speech
 import time
