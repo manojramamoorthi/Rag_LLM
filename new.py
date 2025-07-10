@@ -127,9 +127,8 @@ async def text_to_speech(text, voice, rate, pitch, generate_subtitles=False, upl
     rate_str = f"{rate:+d}%"
     pitch_str = f"{pitch:+d}Hz"
     
-    # Create temporary file for audio
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as tmp_file:
-        audio_path = tmp_file.name
+    # Create temporary file for audio with WAV format and specific name
+    audio_path = "voice_recording.wav"
     
     subtitle_path = None
     
@@ -178,8 +177,8 @@ async def text_to_speech(text, voice, rate, pitch, generate_subtitles=False, upl
                 segment_audio = AudioSegment.from_file(segment['file'])
                 final_audio = final_audio.overlay(segment_audio, position=segment['start'])
             
-            # Export the combined audio
-            final_audio.export(audio_path, format="mp3")
+            # Export the combined audio as WAV
+            final_audio.export(audio_path, format="wav")
             
             # Generate subtitles if requested
             if generate_subtitles:

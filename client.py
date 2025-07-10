@@ -2,6 +2,7 @@ import requests
 import json
 from playsound import playsound
 import os
+import subprocess
 from pathlib import Path
 import numpy as np
 import asyncio
@@ -72,6 +73,7 @@ class VoiceRAGClient:
         if t:
             text = "Define Magnetic Flux"
         else:
+
             audio = AudioSegment.from_wav(audio_file_path)
             audio = audio.set_frame_rate(16000).set_channels(1).set_sample_width(2)
             audio.export("voice_recording.wav", format="wav")
@@ -92,8 +94,6 @@ class VoiceRAGClient:
                 f"{self.base_url}/process-text",
                 json={"question": text}
             )
-
-            print(response.json())
             
             if response.status_code == 200:
                 response = response.json() 
@@ -107,7 +107,7 @@ class VoiceRAGClient:
 
 
     # Initialize client 157.245.102.4
-client = VoiceRAGClient("http://localhost:8000")  # Change to your server URL
+client = VoiceRAGClient("http://192.168.1.140:8000")  # Change to your server URL
 
 print(" Checking API health...")
 health = client.health_check()
@@ -119,16 +119,18 @@ if "error" in health:
 else:
     audio_file = 'voice_recording.wav'
     if Path(audio_file).exists():
+
         s = time.perf_counter()
         result = client.process_text_file(audio_file)
         e = time.perf_counter()
         print(e-s)
+        print(result["response"])
+
         s = time.perf_counter()
         audio = asyncio.run(run_tts(result["response"]))
         e = time.perf_counter()
-        print(e-s)
-        print(result["response"])         
-        playsound(audio)
+        print(e-s)   
+        os.system("aplay voice_recording.wav")
     
     else:
         print(f" Audio file {audio_file} not found!")
