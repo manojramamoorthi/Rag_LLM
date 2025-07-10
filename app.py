@@ -21,7 +21,7 @@ Answer the question based only on the following context:
 Extract and summarize the Answer from the above context 
 You should not use any information out of the knowledge of the context.
 If the question is unrelated to the context politely decline
-Give a detailed explaination
+Give a detailed explaination about the answer
 Question: {question}
 """
 

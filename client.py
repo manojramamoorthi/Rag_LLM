@@ -169,7 +169,7 @@ else:
     audio_file = 'voice_recording.wav'
     if Path(audio_file).exists():
         s = time.perf_counter()
-        result = client.process_audio_file(audio_file)
+        result = client.process_text_file(audio_file)
         e = time.perf_counter()
         print(e-s)
         s = time.perf_counter()
