@@ -5,7 +5,7 @@ import os
 from pathlib import Path
 import numpy as np
 import asyncio
-from tts import text_to_speech
+from new import text_to_speech
 import time
 from vosk import Model, KaldiRecognizer
 import wave
@@ -68,21 +68,24 @@ class VoiceRAGClient:
         except Exception as e:
             return {"error": str(e)}
     
-    def process_text_file(self, audio_file_path):
-        audio = AudioSegment.from_wav(audio_file_path)
-        audio = audio.set_frame_rate(16000).set_channels(1).set_sample_width(2)
-        audio.export("voice_recording.wav", format="wav")
+    def process_text_file(self, audio_file_path,t=True):
+        if t:
+            text = "Define Magnetic Flux"
+        else:
+            audio = AudioSegment.from_wav(audio_file_path)
+            audio = audio.set_frame_rate(16000).set_channels(1).set_sample_width(2)
+            audio.export("voice_recording.wav", format="wav")
 
-        wf = wave.open("voice_recording.wav", "rb")
-        model = Model("vosk-model-small-en-us-0.15")  # Download from https://alphacephei.com/vosk/models
-        rec = KaldiRecognizer(model, wf.getframerate())
-        text =""
-        while True:
-            data = wf.readframes(4000)
-            if len(data) == 0:
-                break
-            if rec.AcceptWaveform(data):
-                text= text+(json.loads(rec.Result())["text"])
+            wf = wave.open("voice_recording.wav", "rb")
+            model = Model("vosk-model-small-en-us-0.15")  # Download from https://alphacephei.com/vosk/models
+            rec = KaldiRecognizer(model, wf.getframerate())
+            text =""
+            while True:
+                data = wf.readframes(4000)
+                if len(data) == 0:
+                    break
+                if rec.AcceptWaveform(data):
+                    text= text+(json.loads(rec.Result())["text"])
         print("Question: ",text)
         try:
             response = requests.post(
