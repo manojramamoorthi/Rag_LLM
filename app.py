@@ -17,12 +17,10 @@ Answer the question based only on the following context:
 {context}
 
 ---
-
-Extract and summarize the Answer from the above context 
-You should not use any information out of the knowledge of the context.
+Question: {question}
+Extract and summarize the Answer from the context
 If the question is unrelated to the context politely decline
 Give a detailed explaination about the answer
-Question: {question}
 """
 
 load_dotenv()

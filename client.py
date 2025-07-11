@@ -16,12 +16,11 @@ sys.stdout.reconfigure(encoding='utf-8')
 
 
 async def run_tts(context):
-    audio_path, subtitle_path, warning =await text_to_speech(
+    audio_path, warning = await text_to_speech(
         text=context,
         voice="en-IN-NeerjaNeural - en-IN (Female)",  # Use a valid voice key from your app
         rate=0,
         pitch=0,
-        generate_subtitles=False,
         uploaded_file=None
     )
     return audio_path
@@ -71,7 +70,7 @@ class VoiceRAGClient:
     
     def process_text_file(self, audio_file_path,t=True):
         if t:
-            text = "Define Magnetic Flux"
+            text = "Define Kirchhoff’s Second rule"
         else:
 
             audio = AudioSegment.from_wav(audio_file_path)
@@ -107,7 +106,7 @@ class VoiceRAGClient:
 
 
     # Initialize client 157.245.102.4
-client = VoiceRAGClient("http://192.168.1.140:8000")  # Change to your server URL
+client = VoiceRAGClient("http://192.168.1.111:8000")  # Change to your server URL
 
 print(" Checking API health...")
 health = client.health_check()
@@ -130,10 +129,7 @@ else:
         audio = asyncio.run(run_tts(result["response"]))
         e = time.perf_counter()
         print(e-s)   
-        os.system("aplay voice_recording.wav")
+        os.system("cvlc --play-and-exit voice_recording.mp3")
     
     else:
         print(f" Audio file {audio_file} not found!")
-    
-    os.remove(audio)
-    

@@ -1,5 +1,6 @@
 import subprocess
 import os
+from new import run
 
 def record_voice(output_path="voice_recording.wav"):
     command = [
@@ -17,5 +18,8 @@ def record_voice(output_path="voice_recording.wav"):
         return None
 
 # Example usage
-audio_file = record_voice()
-print(f"Saved to: {audio_file}")
+# audio_file = record_voice()
+# print(f"Saved to: {audio_file}")
+
+
+audio = asyncio.run(run_tts(result["response"]))
